@@ -17,6 +17,7 @@ module.exports = app => {
   router.post('/login',controller.home.login);
   router.post('/collection',jwt,controller.home.collection);
   router.get('/getjinshi',controller.home.getjinshi);
+  router.get('/getWeather',controller.home.getWeather);
 
 
   router.get('/getTodayAll',controller.home.getTodayAll);

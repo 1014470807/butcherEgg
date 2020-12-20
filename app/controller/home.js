@@ -60,7 +60,7 @@ class HomeController extends Controller {
           delete obj.password;
           ctx.body = Success(obj,'注册成功')
         }).catch(function(err){
-          ctx.body = error(err,'注册失败') 
+          ctx.body = error(err,'注册失败')
         })
       }
     }else{
@@ -92,7 +92,7 @@ class HomeController extends Controller {
       let obj = {};
       obj = JSON.parse(JSON.stringify(data[0]));
       obj['token'] = token;
-      //ctx.body = { data: obj,code: 100, msg: '登录成功' } 
+      //ctx.body = { data: obj,code: 100, msg: '登录成功' }
       ctx.body = Success(obj,'登录成功')
     }else{
       ctx.body = error("-1","账号密码不正确") // 返回前端
@@ -107,9 +107,9 @@ class HomeController extends Controller {
           userid: ctx.locals.userid,
           code: ctx.request.body.code
         }).then(function(result){
-          ctx.body = { code: 1, msg: '收藏成功' } 
+          ctx.body = { code: 1, msg: '收藏成功' }
         }).catch(function(err){
-          ctx.body = { data: err, code: -1, msg: '收藏失败' } 
+          ctx.body = { data: err, code: -1, msg: '收藏失败' }
         })
       }else{
         await app.model.Collection.destroy({
@@ -118,9 +118,9 @@ class HomeController extends Controller {
             userid: ctx.locals.userid,
           }
         }).then(function(result){
-          ctx.body = { code: 1, msg: '取消收藏成功' } 
+          ctx.body = { code: 1, msg: '取消收藏成功' }
         }).catch(function(err){
-          ctx.body = { data: err, code: -1, msg: '取消收藏失败' } 
+          ctx.body = { data: err, code: -1, msg: '取消收藏失败' }
         })
       }
     }else{
@@ -185,7 +185,7 @@ class HomeController extends Controller {
     });
     ctx.body = result;
   }
-   
+
   async Tarticle(){
     const { ctx, app } = this;
     let page = 1;
@@ -280,7 +280,7 @@ class HomeController extends Controller {
     var result;
     let code = '600848';
     let volume = 400;
-    
+
     if(parseInt(this.ctx.query.code)>0 && parseInt(this.ctx.query.volume)>0){
       code = parseInt(this.ctx.query.code)
       volume = parseInt(this.ctx.query.volume)
@@ -357,6 +357,34 @@ class HomeController extends Controller {
     await stock.getTodayTick(options).then(({ data }) => {
       result = data;
     });
+    ctx.body = Success(result,"请求成功");
+  }
+
+  async getWeather() {
+    const { ctx, app } = this;
+    console.log(this.ctx.query.lng)
+    const result = await this.ctx.curl('http://weather01.market.alicloudapi.com/gps-to-weather?needMoreDay=1&lng='
+    + this.ctx.query.lng +
+    '&needAlarm=1&from=5&need3HourForcast=1&needIndex=1&lat='
+    + this.ctx.query.lat +
+    '&needHourData=1', {
+      dataType: 'text',
+      method: 'GET',
+      headers: {"Authorization":"APPCODE aba97cf4f0d74d8c9c2759c9618ce3cc"},
+      data: {
+        lng: this.ctx.query.lng,
+        lat: this.ctx.query.lat,
+        form: 5,
+        need3HourForcast: 1,
+        needAlarm: 1,
+        needHourData: 1,
+        needIndex: 1,
+        needMoreDay: 1
+      }
+    });
+    if (result && result.data) {
+      result.data = JSON.parse(result.data);
+    }
     ctx.body = Success(result,"请求成功");
   }
 
