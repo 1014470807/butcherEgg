@@ -8,6 +8,7 @@ var UUID = require('uuid');
 var sha1 =require("sha1");
 var tushare =require("tushare");
 var {stock} = tushare;
+var WXBizDataCrypt = require('../plugin/WXBizDataCrypt')
 //import { stock } from 'tushare';
 
 function Success(data,msg) {
@@ -388,6 +389,104 @@ class HomeController extends Controller {
     ctx.body = Success(result,"请求成功");
   }
 
+  async getOpenId() {
+    const { ctx, app } = this;
+    console.log(this.ctx.query.lng)
+    const result = await this.ctx.curl('https://api.weixin.qq.com/sns/jscode2session?appid=wx4eb76f5a21b0e167&secret=42bb0df725d1cae28ade4e8dc51de205&grant_type=authorization_code&js_code='
+      + this.ctx.query.code, {
+      dataType: 'text',
+      method: 'GET',
+      data: {
+        code: this.ctx.query.code
+      }
+    });
+    if (result && result.data) {
+      result.data = JSON.parse(result.data);
+    }
+    ctx.body = Success(result,"请求成功");
+  }
+
+  async getAccessToken () {
+    const { ctx, app } = this;
+    let accesstoken = await this.app.redis.get('accesstoken');
+    // console.log(accesstoken, 'accesstoken')
+    if (accesstoken) {
+      // ctx.body = Success(JSON.parse(accesstoken),"请求成功");
+      return JSON.parse(accesstoken);
+    } else {
+      const result = await this.ctx.curl('https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wx4eb76f5a21b0e167&secret=42bb0df725d1cae28ade4e8dc51de205',{
+        dataType: 'text',
+        method: 'GET'
+      });
+      if (result && result.data) {
+        result.data = JSON.parse(result.data);
+        await this.app.redis.set('accesstoken', JSON.stringify(result),'ex', 30);
+      }
+      return result;
+      // ctx.body = Success(result,"请求成功");
+    }
+  }
+
+  async getUserData () {
+    const { ctx, app } = this;
+    // let access = await this.getAccessToken();
+    // let data = await access.data.access_token;
+    // console.log(data);
+    // const result = await this.ctx.curl('https://api.weixin.qq.com/wxa/getpaidunionid?access_token=' + data + '&openid=' + this.ctx.request.body.openId, {
+    //   dataType: 'text',
+    //   method: 'POST',
+    //   data: {
+    //     openid: this.ctx.query.openId,
+    //     access_token: data
+    //   }
+    // });
+    console.log(this.ctx.request.body.sessionKey, this.ctx.request.body.wxEncrpytedData, this.ctx.request.body.wxIv)
+    let pc = await new WXBizDataCrypt('wx4eb76f5a21b0e167', this.ctx.request.body.sessionKey);
+    let data = await pc.decryptData(decodeURIComponent(this.ctx.request.body.wxEncrpytedData), decodeURIComponent(this.ctx.request.body.wxIv));
+    let res = await app.model.Weather.findAll({
+      where: {
+        unionId: data.unionId,
+      }
+    });
+    // await this.weatherPushData();
+    // console.log(res)
+    if (res.length > 0) {
+    } else {
+      console.log('create');
+      delete data.watermark;
+      data['id'] = '';
+      data['weatherLocation'] = this.ctx.request.body.weatherLocation;
+      await app.model.Weather.create(data).then(function (result) {
+        // console.log(result)
+      }).catch(function(err){
+        // console.log(err)
+      });
+    }
+    ctx.body = Success(data,'请求成功');
+  }
+
+  async weatherPushData () {
+    const { ctx, app } = this;
+    let access = await this.getAccessToken();
+    let data = await access.data.access_token;
+    console.log(data);
+    let obj = {"date1": { "value": "2021年1月2日" }, "phrase2": { "value": "佛山市" }, "phrase3": { "value": "晴" }, "character_string4": { "value": "25" }, "thing5": { "value": "温度较低" }};
+    const result = await this.ctx.curl('https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=' + data, {
+      dataType: 'json',
+      method: 'POST',
+      data: {
+        touser: 'odnQk0R2q835YzRQ12GjkocuNbns',
+        access_token: data,
+        template_id: '3OI7mzl2Nb1zJ8aPhX1xQU_yG2WCcOvKkTuugh9yBF0',
+        page: 'pages/index/index',
+        miniprogram_state: 'developer',
+        data: obj
+      },
+      contentType: 'json'
+    });
+    console.log(result)
+    // ctx.body = Success(result,'请求成功');
+  }
 }
 
 
