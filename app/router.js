@@ -31,4 +31,5 @@ module.exports = app => {
   router.get('/getSinaClassifyDetails',controller.home.getSinaClassifyDetails);
   router.get('/getLiveData',controller.home.getLiveData);
   router.get('/getTodayTick',controller.home.getTodayTick);
+  router.get('/getTradingNews',controller.home.getTradingNews);
 };
