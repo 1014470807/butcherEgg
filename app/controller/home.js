@@ -97,10 +97,16 @@ class HomeController extends Controller {
       obj = JSON.parse(JSON.stringify(data[0]));
       obj['token'] = token;
       //ctx.body = { data: obj,code: 100, msg: '登录成功' }
-      ctx.body = Success(obj, '登录成功');
+      ctx.body = Success(obj, 'Success');
     } else {
-      ctx.body = error('-1', '账号密码不正确'); // 返回前端
+      ctx.body = error(null, '账号密码不正确'); // 返回前端
     }
+  }
+
+  async clearLogin() {
+    const { app, ctx } = this;
+    await app.redis.del('butcher' + this.ctx.request.body.userid);
+    ctx.body = Success('删除成功', 'Success');
   }
 
   async collection() {
@@ -138,7 +144,7 @@ class HomeController extends Controller {
 
   async index() {
     const { ctx } = this;
-    ctx.body = 'hi, egg';
+    ctx.body = 'hi, butcher';
   }
 
   // 获取学生信息 通过一对多的联系

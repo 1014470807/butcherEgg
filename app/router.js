@@ -21,6 +21,7 @@ module.exports = app => {
   router.get('/getOpenId',controller.home.getOpenId);
   router.post('/getUserData',controller.home.getUserData);
   router.get('/getAccessToken',controller.home.getAccessToken);
+  router.post('/clearLogin',jwt,controller.home.clearLogin);
 
 
   router.get('/getTodayAll',controller.home.getTodayAll);
